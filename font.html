@@ -1,64 +1,149 @@
 <!DOCTYPE html>
 <html lang="fa">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>نمایش فونت‌ها و تحلیل جدول</title>
 <style>
   body {
     font-family: Arial, sans-serif;
     padding: 20px;
     direction: rtl;
+    background: #fff;
+    color: #222;
   }
 
-  .font-sample {
-    margin: 15px 0;
-    font-size: 24px;
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 700;
+    color: #111;
   }
 
-  .arial { font-family: Arial, sans-serif; }
-  .tahoma { font-family: Tahoma, sans-serif; }
-  .verdana { font-family: Verdana, sans-serif; }
-  .b-titr { font-family: 'B Titr', sans-serif; }
-  .georgia { font-family: Georgia, serif; }
-  .fake { font-family: 'MyFakeFont', sans-serif; }
-
-  table {
+  /* جدول نمونه فونت ها */
+  table.font-samples {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 30px;
+    margin-bottom: 40px;
+    border: 1px solid #444;
   }
 
-  th, td {
-    border: 1px solid #ccc;
+  table.font-samples th, table.font-samples td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #444;
+    text-align: center;
+    color: #222;
+  }
+
+  table.font-samples thead {
+    background-color: #ddd;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #111;
+  }
+
+  table.font-samples tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+  }
+
+  table.font-samples tbody tr:nth-child(even) {
+    background-color: #e6e6e6;
+  }
+
+  /* فونت‌ها برای نمونه‌ها و اندازه بزرگ‌تر متن */
+  .arial { font-family: Arial, sans-serif; font-size: 30px; }
+  .tahoma { font-family: Tahoma, sans-serif; font-size: 30px; }
+  .verdana { font-family: Verdana, sans-serif; font-size: 30px; }
+  .b-titr { font-family: 'B Titr', sans-serif; font-size: 30px; }
+  .georgia { font-family: Georgia, serif; font-size: 30px; }
+  .courier { font-family: 'Courier New', monospace; font-size: 30px; }
+  .times { font-family: 'Times New Roman', serif; font-size: 30px; }
+  .sans { font-family: sans-serif; font-size: 30px; }
+  .fake { font-family: 'MyFakeFont', sans-serif; font-size: 30px; }
+
+  /* جدول تحلیل به سبک لاگ */
+  table#font-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Courier New', monospace;
+    background: #222;
+    color: #eee;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  #font-table th {
+    background-color: #444;
+    font-weight: 700;
     padding: 10px;
     text-align: center;
   }
 
-  th {
-    background-color: #f0f0f0;
+  #font-table td {
+    padding: 10px;
+    border-bottom: 1px solid #444;
+    text-align: center;
   }
 
-  .installed { background-color: #d4edda; } /* سبز روشن */
-  .not-installed { background-color: #f8d7da; } /* قرمز روشن */
+  #font-table tbody tr:nth-child(odd) {
+    background-color: #2a2a2a;
+  }
+
+  #font-table tbody tr:nth-child(even) {
+    background-color: #1e1e1e;
+  }
+
+  /* وضعیت نصب */
+  .installed {
+    color: #7fdb7f; /* سبز ملایم */
+    font-weight: 600;
+  }
+
+  .not-installed {
+    color: #ff6f6f; /* قرمز ملایم */
+    font-weight: 600;
+  }
+
+  /* تحلیل کوتاه */
+  .analysis {
+    font-style: normal;
+    font-size: 0.9rem;
+    color: #ccc;
+  }
+
 </style>
 </head>
 <body>
+
 <h1>نمونه فونت‌ها و تحلیل نصب</h1>
 
-<div class="font-sample arial">سلام به جهان - Arial</div>
-<div class="font-sample tahoma">سلام به جهان - Tahoma</div>
-<div class="font-sample verdana">سلام به جهان - Verdana</div>
-<div class="font-sample b-titr">سلام به جهان - B Titr</div>
-<div class="font-sample georgia">سلام به جهان - Georgia</div>
-<div class="font-sample fake">سلام به جهان - MyFakeFont</div>
+<table class="font-samples" aria-label="نمونه فونت‌ها">
+  <thead>
+    <tr>
+      <th>متن فارسی</th>
+      <th>نام فونت</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="arial">سلام به جهان</td><td class="arial">Arial</td></tr>
+    <tr><td class="tahoma">سلام به جهان</td><td class="tahoma">Tahoma</td></tr>
+    <tr><td class="verdana">سلام به جهان</td><td class="verdana">Verdana</td></tr>
+    <tr><td class="b-titr">سلام به جهان</td><td class="b-titr">B Titr</td></tr>
+    <tr><td class="georgia">سلام به جهان</td><td class="georgia">Georgia</td></tr>
+    <tr><td class="courier">سلام به جهان</td><td class="courier">Courier New</td></tr>
+    <tr><td class="times">سلام به جهان</td><td class="times">Times New Roman</td></tr>
+    <tr><td class="sans">سلام به جهان</td><td class="sans">sans-serif</td></tr>
+    <tr><td class="fake">سلام به جهان</td><td class="fake">MyFakeFont</td></tr>
+  </tbody>
+</table>
 
-<table id="font-table">
+<table id="font-table" aria-label="تحلیل نصب فونت‌ها">
   <thead>
     <tr>
       <th>فونت</th>
-      <th>وضعیت نصب</th>
-      <th>طول متن با فونت</th>
-      <th>طول متن با پیش‌فرض</th>
+      <th>وضعیت</th>
+      <th>طول متن</th>
+      <th>پیش‌فرض</th>
       <th>تحلیل</th>
     </tr>
   </thead>
@@ -80,7 +165,7 @@ function isFontAvailable(font) {
   return { installed: fontWidth !== defaultWidth, width: fontWidth, defaultWidth: defaultWidth };
 }
 
-const fonts = ['Arial', 'Tahoma', 'Verdana', 'B Titr', 'Georgia', 'MyFakeFont'];
+const fonts = ['Arial', 'Tahoma', 'Verdana', 'B Titr', 'Georgia', 'Courier New', 'Times New Roman', 'sans-serif', 'MyFakeFont'];
 const tbody = document.querySelector('#font-table tbody');
 
 fonts.forEach(f => {
@@ -90,19 +175,20 @@ fonts.forEach(f => {
   tr.className = result.installed ? 'installed' : 'not-installed';
 
   const analysis = result.installed 
-    ? 'فونت نصب شده است. ابعاد متن با پیش‌فرض متفاوت است.' 
-    : 'فونت نصب نیست و مرورگر از فونت پیش‌فرض استفاده کرده.';
+    ? 'نصب شده' 
+    : 'نصب نیست';
 
   tr.innerHTML = `
     <td>${f}</td>
-    <td>${result.installed ? 'نصب شده ✅' : 'نصب نیست ⚠️'}</td>
+    <td>${result.installed ? '✔️' : '⚠️'}</td>
     <td>${result.width.toFixed(2)}</td>
     <td>${result.defaultWidth.toFixed(2)}</td>
-    <td>${analysis}</td>
+    <td class="analysis">${analysis}</td>
   `;
 
   tbody.appendChild(tr);
 });
 </script>
+
 </body>
 </html>
