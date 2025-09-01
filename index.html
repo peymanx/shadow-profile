@@ -1,126 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Device Fingerprint + Keystroke Demo</title>
+<meta charset="UTF-8" />
+<title>Device Fingerprint with Stable and Dynamic Hash</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 40px; background: #f0f0f0; }
-  h1 { color: #333; }
-  .fingerprint { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
+  body { font-family: Arial, sans-serif; margin: 40px; background: #f0f0f0; direction: ltr; }
+  h1, h2 { color: #333; }
+  .fingerprint { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-top: 30px; }
   .item { margin-bottom: 10px; }
   .label { font-weight: bold; color: #555; }
-  #typingArea { width: 100%; padding: 10px; font-size: 16px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; }
+  #hashStable, #hashDynamic {
+    font-family: monospace; 
+    background: #222; 
+    color: #0f0; 
+    padding: 20px; 
+    border-radius: 12px; 
+    font-size: 1.6em; 
+    word-break: break-all;
+    user-select: all;
+    text-align: center;
+    margin-bottom: 20px;
+    transition: color 0.3s ease;
+  }
+  .hash-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 700px;
+  }
+  .canvas-image {
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    max-width: 180px;
+    height: auto;
+  }
 </style>
 </head>
 <body>
 
-<h1>Device Fingerprint Info</h1>
-<div class="fingerprint" id="fingerprint"></div>
-
-<h1>Keystroke Dynamics Test</h1>
-<p>لطفاً این متن را تایپ کنید:</p>
-<input type="text" id="typingArea" placeholder="Type here..." />
-
-<div class="fingerprint" id="keystrokeData">
-  <h3>Keystroke Data:</h3>
+<h1>🔑 Device Fingerprint Hashes</h1>
+<div class="hash-container">
+  <div>
+    <h2>🛡️ Stable Hash (Does NOT change on window resize)</h2>
+    <div id="hashStable">Calculating...</div>
+  </div>
+  <div>
+    <h2>🎯 Dynamic Hash (Changes on window resize)</h2>
+    <div id="hashDynamic">Calculating...</div>
+  </div>
 </div>
 
+<h1>🧩 Comprehensive Device Fingerprint Info</h1>
+<div class="fingerprint" id="fingerprint"></div>
+
 <script>
-// ======= Device Fingerprint =======
-function addItem(label, value) {
+// --- Data storage ---
+const fingerprintElements = {};
+const stableFingerprintData = [];
+const dynamicFingerprintData = [];
+
+// Helper to add/update items in fingerprint display and arrays
+function addOrUpdateItem(label, value, emoji = "", toStable = true, toDynamic = true, extraHTML = "") {
     const container = document.getElementById("fingerprint");
-    const div = document.createElement("div");
-    div.className = "item";
-    div.innerHTML = `<span class="label">${label}:</span> ${value}`;
-    container.appendChild(div);
+
+    if (!fingerprintElements[label]) {
+        const div = document.createElement("div");
+        div.className = "item";
+        fingerprintElements[label] = div;
+        container.appendChild(div);
+    }
+
+    const em = emoji ? emoji + " " : "";
+    fingerprintElements[label].innerHTML = `<span class="label">${em}${label}:</span> ${value} ${extraHTML}`;
+
+    // Update stable array
+    if (toStable) {
+        const idx = stableFingerprintData.findIndex(item => item.startsWith(label + ":"));
+        if (idx >= 0) stableFingerprintData[idx] = `${label}:${value}`;
+        else stableFingerprintData.push(`${label}:${value}`);
+    }
+
+    // Update dynamic array
+    if (toDynamic) {
+        const idx = dynamicFingerprintData.findIndex(item => item.startsWith(label + ":"));
+        if (idx >= 0) dynamicFingerprintData[idx] = `${label}:${value}`;
+        else dynamicFingerprintData.push(`${label}:${value}`);
+    }
 }
 
-// 1. User-Agent
-addItem("User-Agent", navigator.userAgent);
+// Collect stable info (doesn't depend on window size or dynamic data)
+function collectStableInfo() {
+    addOrUpdateItem("User-Agent", navigator.userAgent, "🤖", true, false);
+    addOrUpdateItem("Browser Language", navigator.language, "🌐", true, false);
+    addOrUpdateItem("Preferred Languages", navigator.languages ? navigator.languages.join(", ") : "Unknown", "🗣️", true, false);
+    addOrUpdateItem("Time Zone", Intl.DateTimeFormat().resolvedOptions().timeZone, "⏰", true, false);
+    addOrUpdateItem("Screen Resolution", `${screen.width} x ${screen.height}`, "🖥️", true, false);
+    addOrUpdateItem("Available Screen Resolution", `${screen.availWidth} x ${screen.availHeight}`, "📺", true, false);
+    addOrUpdateItem("Color Depth", screen.colorDepth, "🎨", true, false);
+    addOrUpdateItem("Pixel Depth", screen.pixelDepth, "🟦", true, false);
+    addOrUpdateItem("Cookies Enabled", navigator.cookieEnabled, "🍪", true, false);
+    addOrUpdateItem("Local Storage Supported", (() => {
+        try { localStorage.setItem('test','1'); localStorage.removeItem('test'); return "Yes"; }
+        catch(e){ return "No"; }
+    })(), "💾", true, false);
+    addOrUpdateItem("Session Storage Supported", (() => {
+        try { sessionStorage.setItem('test','1'); sessionStorage.removeItem('test'); return "Yes"; }
+        catch(e){ return "No"; }
+    })(), "🗄️", true, false);
+    addOrUpdateItem("IndexedDB Supported", !!window.indexedDB ? "Yes" : "No", "🧩", true, false);
+    addOrUpdateItem("Do Not Track", navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack || "Unset", "🚫", true, false);
+    
+    function getPlugins() {
+        if (navigator.plugins) {
+            let plugins = [];
+            for (let i=0; i < navigator.plugins.length; i++) {
+                plugins.push(navigator.plugins[i].name);
+            }
+            return plugins.length ? plugins.join(", ") : "No Plugins";
+        }
+        return "Not supported";
+    }
+    addOrUpdateItem("Plugins", getPlugins(), "🔌", true, false);
+    
+    function getMimeTypes() {
+        if (navigator.mimeTypes) {
+            let mimes = [];
+            for (let i=0; i < navigator.mimeTypes.length; i++) {
+                mimes.push(navigator.mimeTypes[i].type);
+            }
+            return mimes.length ? mimes.join(", ") : "No MIME Types";
+        }
+        return "Not supported";
+    }
+    addOrUpdateItem("MIME Types", getMimeTypes(), "📄", true, false);
 
-// 2. زبان مرورگر
-addItem("Browser Language", navigator.language);
-addItem("Preferred Languages", navigator.languages.join(", "));
+    addOrUpdateItem("Screen Orientation", screen.orientation ? screen.orientation.type : "Not supported", "📱", true, false);
+    addOrUpdateItem("CPU Cores", navigator.hardwareConcurrency || "Unknown", "🧠", true, false);
+    addOrUpdateItem("Device Memory (GB)", navigator.deviceMemory || "Unknown", "🛠️", true, false);
+    addOrUpdateItem("Touch Support", ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? "Yes" : "No", "✋", true, false);
+    addOrUpdateItem("Platform", navigator.platform || "Unknown", "💻", true, false);
 
-// 3. Timezone
-addItem("Time Zone", Intl.DateTimeFormat().resolvedOptions().timeZone);
+    // Canvas fingerprint goes into stable data only
+    const canvasFingerprint = getCanvasFingerprint();
+    addOrUpdateItem("Canvas Fingerprint", canvasFingerprint, "🎨", true, false, `<br><img class="canvas-image" src="${canvasFingerprint}" alt="Canvas Fingerprint Image" />`);
+}
 
-// 4. رزولوشن صفحه و عمق رنگ
-addItem("Screen Resolution", `${screen.width} x ${screen.height}`);
-addItem("Color Depth", screen.colorDepth);
+// Collect dynamic info (changes on window resize)
+function collectDynamicInfo() {
+    addOrUpdateItem("Window Inner Size", `${window.innerWidth} x ${window.innerHeight}`, "📐", false, true);
+}
 
-// 5. Canvas Fingerprint
+// Canvas Fingerprint generation
 function getCanvasFingerprint() {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     ctx.textBaseline = "top";
     ctx.font = "16px Arial";
-    ctx.fillText("Fingerprint Test", 2, 2);
+    ctx.fillStyle = "#f60";
+    ctx.fillRect(125,1,62,20);
+    ctx.fillStyle = "#069";
+    ctx.fillText("Fingerprint Test", 2, 15);
+    ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+    ctx.fillText("Fingerprint Test", 4, 17);
     return canvas.toDataURL();
 }
-addItem("Canvas Fingerprint", getCanvasFingerprint());
 
-// 6. WebGL Fingerprint
-function getWebGLFingerprint() {
-    const canvas = document.createElement("canvas");
-    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-    if (!gl) return "Not supported";
-    const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
-    if (debugInfo) {
-        const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
-        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-        return `${vendor} / ${renderer}`;
+// Battery info async (add to both stable and dynamic)
+function addBatteryInfo() {
+    if (navigator.getBattery) {
+        navigator.getBattery().then(function(battery) {
+            // Adding battery info both to stable (mostly stable) and dynamic (charging status can change)
+            addOrUpdateItem("Battery Level", (battery.level * 100).toFixed(0) + "%", "🔋", true, true);
+            addOrUpdateItem("Charging", battery.charging ? "Yes" : "No", "⚡", true, true);
+            addOrUpdateItem("Charging Time (sec)", battery.chargingTime, "⏳", true, true);
+            addOrUpdateItem("Discharging Time (sec)", battery.dischargingTime, "⌛", true, true);
+            finalizeHashes();
+        });
+    } else {
+        addOrUpdateItem("Battery Status", "Not supported", "🔋", true, true);
+        finalizeHashes();
     }
-    return "Unknown";
-}
-addItem("WebGL Fingerprint", getWebGLFingerprint());
-
-// 7. Battery Status
-if (navigator.getBattery) {
-    navigator.getBattery().then(function(battery) {
-        addItem("Battery Level", battery.level * 100 + "%");
-        addItem("Charging", battery.charging);
-        addItem("Charging Time", battery.chargingTime + " sec");
-        addItem("Discharging Time", battery.dischargingTime + " sec");
-    });
-} else {
-    addItem("Battery Status", "Not supported");
 }
 
-// 8. Device Memory & CPU Cores
-addItem("Device Memory (GB)", navigator.deviceMemory || "Unknown");
-addItem("CPU Cores", navigator.hardwareConcurrency || "Unknown");
+// SHA-256 hashing function
+async function sha256(str) {
+    const buf = new TextEncoder("utf-8").encode(str);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", buf);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+}
 
-// 9. Touch Support
-addItem("Touch Support", 'ontouchstart' in window ? "Yes" : "No");
+// Calculate & display both hashes
+async function finalizeHashes() {
+    const stableCombined = stableFingerprintData.join("\n");
+    const dynamicCombined = stableFingerprintData.concat(dynamicFingerprintData).join("\n");
 
-// 10. Platform
-addItem("Platform", navigator.platform || "Unknown");
+    const [stableHash, dynamicHash] = await Promise.all([
+        sha256(stableCombined),
+        sha256(dynamicCombined)
+    ]);
 
-// ======= Keystroke Dynamics =======
-const typingArea = document.getElementById("typingArea");
-const keystrokeContainer = document.getElementById("keystrokeData");
+    const stableDiv = document.getElementById("hashStable");
+    const dynamicDiv = document.getElementById("hashDynamic");
 
-let keystrokes = [];
+    stableDiv.textContent = stableHash;
+    dynamicDiv.textContent = dynamicHash;
 
-typingArea.addEventListener("keydown", e => {
-    keystrokes.push({ key: e.key, type: "down", time: Date.now() });
-    displayKeystrokes();
+    // Random color for dynamic hash to emphasize change
+    const colors = ['#0f0', '#ff0', '#0ff', '#f0f', '#f00', '#00f', '#ffa500'];
+    dynamicDiv.style.color = colors[Math.floor(Math.random() * colors.length)];
+    stableDiv.style.color = "#0f0";  // Stable is always green
+}
+
+// Initialize all info
+function init() {
+    collectStableInfo();
+    collectDynamicInfo();
+    addBatteryInfo();
+    finalizeHashes();
+}
+
+// Update dynamic info and dynamic hash on window resize
+window.addEventListener('resize', () => {
+    collectDynamicInfo();
+    finalizeHashes();
 });
 
-typingArea.addEventListener("keyup", e => {
-    keystrokes.push({ key: e.key, type: "up", time: Date.now() });
-    displayKeystrokes();
-});
+// Run on load
+init();
 
-function displayKeystrokes() {
-    keystrokeContainer.innerHTML = "<h3>Keystroke Data:</h3>";
-    keystrokes.slice(-50).forEach(k => { // نمایش آخرین 50 رویداد
-        const div = document.createElement("div");
-        div.textContent = `[${k.type}] ${k.key} at ${k.time}`;
-        keystrokeContainer.appendChild(div);
-    });
-}
 </script>
 
 </body>
