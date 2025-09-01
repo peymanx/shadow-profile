@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<title>نمایش فونت‌ها و تحلیل جدول</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    direction: rtl;
+  }
+
+  .font-sample {
+    margin: 15px 0;
+    font-size: 24px;
+  }
+
+  .arial { font-family: Arial, sans-serif; }
+  .tahoma { font-family: Tahoma, sans-serif; }
+  .verdana { font-family: Verdana, sans-serif; }
+  .b-titr { font-family: 'B Titr', sans-serif; }
+  .georgia { font-family: Georgia, serif; }
+  .fake { font-family: 'MyFakeFont', sans-serif; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 30px;
+  }
+
+  th, td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+  }
+
+  th {
+    background-color: #f0f0f0;
+  }
+
+  .installed { background-color: #d4edda; } /* سبز روشن */
+  .not-installed { background-color: #f8d7da; } /* قرمز روشن */
+</style>
+</head>
+<body>
+<h1>نمونه فونت‌ها و تحلیل نصب</h1>
+
+<div class="font-sample arial">سلام به جهان - Arial</div>
+<div class="font-sample tahoma">سلام به جهان - Tahoma</div>
+<div class="font-sample verdana">سلام به جهان - Verdana</div>
+<div class="font-sample b-titr">سلام به جهان - B Titr</div>
+<div class="font-sample georgia">سلام به جهان - Georgia</div>
+<div class="font-sample fake">سلام به جهان - MyFakeFont</div>
+
+<table id="font-table">
+  <thead>
+    <tr>
+      <th>فونت</th>
+      <th>وضعیت نصب</th>
+      <th>طول متن با فونت</th>
+      <th>طول متن با پیش‌فرض</th>
+      <th>تحلیل</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+function isFontAvailable(font) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const text = "سلام به جهان";
+
+  ctx.font = '72px monospace';
+  const defaultWidth = ctx.measureText(text).width;
+
+  ctx.font = `72px '${font}', monospace`;
+  const fontWidth = ctx.measureText(text).width;
+
+  return { installed: fontWidth !== defaultWidth, width: fontWidth, defaultWidth: defaultWidth };
+}
+
+const fonts = ['Arial', 'Tahoma', 'Verdana', 'B Titr', 'Georgia', 'MyFakeFont'];
+const tbody = document.querySelector('#font-table tbody');
+
+fonts.forEach(f => {
+  const result = isFontAvailable(f);
+  const tr = document.createElement('tr');
+
+  tr.className = result.installed ? 'installed' : 'not-installed';
+
+  const analysis = result.installed 
+    ? 'فونت نصب شده است. ابعاد متن با پیش‌فرض متفاوت است.' 
+    : 'فونت نصب نیست و مرورگر از فونت پیش‌فرض استفاده کرده.';
+
+  tr.innerHTML = `
+    <td>${f}</td>
+    <td>${result.installed ? 'نصب شده ✅' : 'نصب نیست ⚠️'}</td>
+    <td>${result.width.toFixed(2)}</td>
+    <td>${result.defaultWidth.toFixed(2)}</td>
+    <td>${analysis}</td>
+  `;
+
+  tbody.appendChild(tr);
+});
+</script>
+</body>
+</html>

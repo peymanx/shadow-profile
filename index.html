@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Device Fingerprint + Keystroke Demo</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 40px; background: #f0f0f0; }
+  h1 { color: #333; }
+  .fingerprint { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 30px; }
+  .item { margin-bottom: 10px; }
+  .label { font-weight: bold; color: #555; }
+  #typingArea { width: 100%; padding: 10px; font-size: 16px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; }
+</style>
+</head>
+<body>
+
+<h1>Device Fingerprint Info</h1>
+<div class="fingerprint" id="fingerprint"></div>
+
+<h1>Keystroke Dynamics Test</h1>
+<p>لطفاً این متن را تایپ کنید:</p>
+<input type="text" id="typingArea" placeholder="Type here..." />
+
+<div class="fingerprint" id="keystrokeData">
+  <h3>Keystroke Data:</h3>
+</div>
+
+<script>
+// ======= Device Fingerprint =======
+function addItem(label, value) {
+    const container = document.getElementById("fingerprint");
+    const div = document.createElement("div");
+    div.className = "item";
+    div.innerHTML = `<span class="label">${label}:</span> ${value}`;
+    container.appendChild(div);
+}
+
+// 1. User-Agent
+addItem("User-Agent", navigator.userAgent);
+
+// 2. زبان مرورگر
+addItem("Browser Language", navigator.language);
+addItem("Preferred Languages", navigator.languages.join(", "));
+
+// 3. Timezone
+addItem("Time Zone", Intl.DateTimeFormat().resolvedOptions().timeZone);
+
+// 4. رزولوشن صفحه و عمق رنگ
+addItem("Screen Resolution", `${screen.width} x ${screen.height}`);
+addItem("Color Depth", screen.colorDepth);
+
+// 5. Canvas Fingerprint
+function getCanvasFingerprint() {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    ctx.textBaseline = "top";
+    ctx.font = "16px Arial";
+    ctx.fillText("Fingerprint Test", 2, 2);
+    return canvas.toDataURL();
+}
+addItem("Canvas Fingerprint", getCanvasFingerprint());
+
+// 6. WebGL Fingerprint
+function getWebGLFingerprint() {
+    const canvas = document.createElement("canvas");
+    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+    if (!gl) return "Not supported";
+    const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+    if (debugInfo) {
+        const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+        return `${vendor} / ${renderer}`;
+    }
+    return "Unknown";
+}
+addItem("WebGL Fingerprint", getWebGLFingerprint());
+
+// 7. Battery Status
+if (navigator.getBattery) {
+    navigator.getBattery().then(function(battery) {
+        addItem("Battery Level", battery.level * 100 + "%");
+        addItem("Charging", battery.charging);
+        addItem("Charging Time", battery.chargingTime + " sec");
+        addItem("Discharging Time", battery.dischargingTime + " sec");
+    });
+} else {
+    addItem("Battery Status", "Not supported");
+}
+
+// 8. Device Memory & CPU Cores
+addItem("Device Memory (GB)", navigator.deviceMemory || "Unknown");
+addItem("CPU Cores", navigator.hardwareConcurrency || "Unknown");
+
+// 9. Touch Support
+addItem("Touch Support", 'ontouchstart' in window ? "Yes" : "No");
+
+// 10. Platform
+addItem("Platform", navigator.platform || "Unknown");
+
+// ======= Keystroke Dynamics =======
+const typingArea = document.getElementById("typingArea");
+const keystrokeContainer = document.getElementById("keystrokeData");
+
+let keystrokes = [];
+
+typingArea.addEventListener("keydown", e => {
+    keystrokes.push({ key: e.key, type: "down", time: Date.now() });
+    displayKeystrokes();
+});
+
+typingArea.addEventListener("keyup", e => {
+    keystrokes.push({ key: e.key, type: "up", time: Date.now() });
+    displayKeystrokes();
+});
+
+function displayKeystrokes() {
+    keystrokeContainer.innerHTML = "<h3>Keystroke Data:</h3>";
+    keystrokes.slice(-50).forEach(k => { // نمایش آخرین 50 رویداد
+        const div = document.createElement("div");
+        div.textContent = `[${k.type}] ${k.key} at ${k.time}`;
+        keystrokeContainer.appendChild(div);
+    });
+}
+</script>
+
+</body>
+</html>
