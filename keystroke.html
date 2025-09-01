@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="fa">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>Keystroke Analysis with Chart</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
 <style>
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -39,7 +41,39 @@
   .rtl { direction: rtl; text-align: right; }
   .highlight { font-weight: bold; color: #007bff; }
   #chartContainer { width: 90%; max-width: 600px; margin-top: 30px; }
+  h3 { margin-top: 30px; }
+
+  /* انیمیشن گرادینت متحرک */
+  @keyframes gradientShift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .highlight-similarity {
+    direction: rtl;
+    background: linear-gradient(270deg, #4facfe, #00f2fe, #4facfe, #00f2fe);
+    background-size: 400% 400%;
+    animation: gradientShift 8s ease infinite;
+    color: white;
+    font-weight: 900;
+    font-size: 24px;
+    padding: 15px 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0, 146, 255, 0.6);
+    margin-bottom: 20px;
+    width: fit-content;
+    user-select: none;
+  }
 </style>
+
+
 </head>
 <body>
 
@@ -51,7 +85,7 @@
 </div>
 
 <script>
-let firstSample = null;
+let samples = [];
 let keyData = {};
 let sequence = [];
 
@@ -61,96 +95,159 @@ const ctx = document.getElementById('keystrokeChart').getContext('2d');
 let chart = null;
 
 function isPersian(text) {
-    return /[\u0600-\u06FF]/.test(text);
+  return /[\u0600-\u06FF]/.test(text);
 }
 
 textInput.addEventListener('keydown', (e) => {
-    if (!keyData[e.code]) keyData[e.code] = {down: null, up: null};
-    keyData[e.code].down = Date.now();
-    sequence.push(e.code);
+  if (!keyData[e.code]) keyData[e.code] = {down: null, up: null};
+  keyData[e.code].down = Date.now();
+  sequence.push(e.code);
 });
 
 textInput.addEventListener('keyup', (e) => {
-    keyData[e.code].up = Date.now();
+  keyData[e.code].up = Date.now();
 });
 
 textInput.addEventListener('keyup', (e) => {
-    if (e.key === 'Enter') {
-        const currentText = textInput.value.trim();
-        const rtl = isPersian(currentText);
-        
-        let rows = [];
-        let holdTimes = [];
-        let flightTimes = [];
+  if (e.key === 'Enter') {
+    const currentText = textInput.value.trim();
+    const rtl = isPersian(currentText);
 
-        for (let i=0; i<sequence.length; i++){
-            let key = sequence[i];
-            let hold = keyData[key].up - keyData[key].down;
-            holdTimes.push(hold);
-            let flight = i>0 ? keyData[key].down - keyData[sequence[i-1]].up : 0;
-            if(i>0) flightTimes.push(flight);
-            rows.push({key, hold, flight});
-        }
+    let holdTimes = [];
+    let flightTimes = [];
 
-        let tableHTML = `<table class="${rtl?'rtl':''}"><tr><th>کلید</th><th>زمان نگه داشتن (ms)</th><th>فاصله با کلید قبلی (ms)</th></tr>`;
-        rows.forEach(r => tableHTML += `<tr><td>${r.key}</td><td>${r.hold}</td><td>${r.flight || '-'}</td></tr>`);
-        tableHTML += `</table>`;
-
-        if (!firstSample){
-            firstSample = {holdTimes, flightTimes};
-            resultDiv.innerHTML = `<span class="highlight">اولین نمونه ثبت شد.</span>\n${tableHTML}`;
-            if(chart) chart.destroy();
-        } else {
-            let minHold = Math.min(firstSample.holdTimes.length, holdTimes.length);
-            let minFlight = Math.min(firstSample.flightTimes.length, flightTimes.length);
-
-            let holdDiff = 0;
-            for (let i=0; i<minHold; i++) holdDiff += Math.abs(firstSample.holdTimes[i]-holdTimes[i]);
-            let flightDiff = 0;
-            for (let i=0; i<minFlight; i++) flightDiff += Math.abs(firstSample.flightTimes[i]-flightTimes[i]);
-
-            let avgDiff = (holdDiff/minHold + flightDiff/minFlight)/2;
-            let similarity = Math.max(0, 100 - avgDiff/10);
-
-            resultDiv.innerHTML = `<span class="highlight">شباهت تایپ: ${similarity.toFixed(2)}%</span>\n${tableHTML}`;
-
-            // نمودار
-            const labels = sequence.map((k,i)=>`Key ${i+1}`);
-            if(chart) chart.destroy();
-            chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'نمونه اول Hold Time',
-                            data: firstSample.holdTimes,
-                            borderColor: 'rgba(0,123,255,0.8)',
-                            backgroundColor: 'rgba(0,123,255,0.2)',
-                            tension: 0.3
-                        },
-                        {
-                            label: 'نمونه دوم Hold Time',
-                            data: holdTimes,
-                            borderColor: 'rgba(255,99,132,0.8)',
-                            backgroundColor: 'rgba(255,99,132,0.2)',
-                            tension: 0.3
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {legend: {position: 'top'}},
-                    scales: {y: {beginAtZero: true}}
-                }
-            });
-        }
-
-        keyData = {};
-        sequence = [];
-        textInput.value = "";
+    for (let i=0; i<sequence.length; i++){
+      let key = sequence[i];
+      let hold = keyData[key].up - keyData[key].down;
+      holdTimes.push(hold);
+      if(i > 0) {
+        let flight = keyData[key].down - keyData[sequence[i-1]].up;
+        flightTimes.push(flight);
+      }
     }
+
+    samples.push({holdTimes, flightTimes, sequence: [...sequence]});
+
+    function makeTable(sample){
+      let html = `<table class="${rtl?'rtl':''}"><tr><th>کلید</th><th>زمان نگه داشتن (ms)</th><th>فاصله با کلید قبلی (ms)</th></tr>`;
+      for(let i=0; i<sample.sequence.length; i++){
+        let k = sample.sequence[i];
+        let h = sample.holdTimes[i];
+        let f = i > 0 ? sample.flightTimes[i-1] : '-';
+        html += `<tr><td>${k}</td><td>${h.toFixed(0)}</td><td>${f === '-' ? '-' : f.toFixed(0)}</td></tr>`;
+      }
+      html += `</table>`;
+      return html;
+    }
+
+    if(samples.length === 1){
+      // نمونه اول
+      resultDiv.innerHTML = `<span class="highlight">اولین نمونه ثبت شد.</span>\n${makeTable(samples[0])}`;
+      if(chart) chart.destroy();
+    }
+    else if(samples.length === 2){
+      // نمونه دوم: نمایش هر دو جدول + جدول مقایسه + نمودار
+      let firstSample = samples[0];
+      let secondSample = samples[1];
+
+      let minHold = Math.min(firstSample.holdTimes.length, secondSample.holdTimes.length);
+      let minFlight = Math.min(firstSample.flightTimes.length, secondSample.flightTimes.length);
+
+      let holdDiffSum = 0;
+      for(let i=0; i<minHold; i++) holdDiffSum += Math.abs(firstSample.holdTimes[i] - secondSample.holdTimes[i]);
+      let flightDiffSum = 0;
+      for(let i=0; i<minFlight; i++) flightDiffSum += Math.abs(firstSample.flightTimes[i] - secondSample.flightTimes[i]);
+
+      let avgDiff = (holdDiffSum/minHold + flightDiffSum/minFlight) / 2;
+      let similarity = Math.max(0, 100 - avgDiff/10);
+
+      // جدول مقایسه با ستون اختلاف
+      let compareTable = `<h3>مقایسه نمونه اول و دوم</h3><table class="${rtl?'rtl':''}"><tr>
+        <th>کلید</th>
+        <th>زمان نگه داشتن نمونه اول (ms)</th>
+        <th>زمان نگه داشتن نمونه دوم (ms)</th>
+        <th>اختلاف نگه داشتن (ms)</th>
+        <th>فاصله با کلید قبلی نمونه اول (ms)</th>
+        <th>فاصله با کلید قبلی نمونه دوم (ms)</th>
+        <th>اختلاف فاصله (ms)</th>
+      </tr>`;
+
+      for(let i=0; i<minHold; i++){
+        let hold1 = firstSample.holdTimes[i];
+        let hold2 = secondSample.holdTimes[i];
+        let holdDiffRow = Math.abs(hold1 - hold2);
+
+        let flight1 = i > 0 ? firstSample.flightTimes[i-1] : '-';
+        let flight2 = i > 0 ? secondSample.flightTimes[i-1] : '-';
+        let flightDiffRow = (i > 0) ? Math.abs(flight1 - flight2) : '-';
+
+        compareTable += `<tr>
+          <td>${firstSample.sequence[i]}</td>
+          <td>${hold1.toFixed(0)}</td>
+          <td>${hold2.toFixed(0)}</td>
+          <td>${holdDiffRow.toFixed(0)}</td>
+          <td>${flight1 === '-' ? '-' : flight1.toFixed(0)}</td>
+          <td>${flight2 === '-' ? '-' : flight2.toFixed(0)}</td>
+          <td>${flightDiffRow === '-' ? '-' : flightDiffRow.toFixed(0)}</td>
+        </tr>`;
+      }
+      compareTable += `</table>`;
+
+      // نمایش جداول نمونه اول و دوم و جدول مقایسه
+      resultDiv.innerHTML = `
+        <div class="highlight-similarity">شباهت تایپ: ${similarity.toFixed(2)}%</div>
+        <h3>نمونه اول</h3>
+        ${makeTable(firstSample)}
+        <h3>نمونه دوم</h3>
+        ${makeTable(secondSample)}
+        ${compareTable}
+      `;
+
+      // نمودار نگه داشتن کلیدها برای هر دو نمونه
+      const labels = secondSample.sequence.map((k,i)=>`Key ${i+1}`);
+      if(chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'نمونه اول Hold Time',
+              data: firstSample.holdTimes,
+              borderColor: 'rgba(0,123,255,0.8)',
+              backgroundColor: 'rgba(0,123,255,0.2)',
+              tension: 0.3
+            },
+            {
+              label: 'نمونه دوم Hold Time',
+              data: secondSample.holdTimes,
+              borderColor: 'rgba(255,99,132,0.8)',
+              backgroundColor: 'rgba(255,99,132,0.2)',
+              tension: 0.3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {legend: {position: 'top'}},
+          scales: {y: {beginAtZero: true}}
+        }
+      });
+
+    }
+    else if(samples.length === 3){
+      // ریست نمونه‌ها و ثبت نمونه سوم به عنوان نمونه اول جدید
+      samples = [samples[2]];
+      resultDiv.innerHTML = `<span class="highlight">نمونه‌ها ریست شدند. نمونه جدید ثبت شد.</span>\n${makeTable(samples[0])}`;
+      if(chart) chart.destroy();
+    }
+
+    keyData = {};
+    sequence = [];
+    textInput.value = "";
+  }
 });
 </script>
+
 </body>
 </html>
