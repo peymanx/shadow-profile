@@ -5,7 +5,7 @@
 <title>نمایش فونت‌ها و تحلیل جدول</title>
 <style>
   body {
-    font-family: Arial, sans-serif;
+    font-family: Arial;
     padding: 20px;
     direction: rtl;
     background: #fff;
@@ -13,11 +13,12 @@
   }
 
   h1 {
-    font-size: 2rem;
+    font-size: 3.5rem;
     margin-bottom: 20px;
     text-align: center;
     font-weight: 700;
     color: #111;
+    font-family: 'Irannastaliq';
   }
 
   /* جدول نمونه فونت ها */
@@ -51,15 +52,20 @@
   }
 
   /* فونت‌ها برای نمونه‌ها و اندازه بزرگ‌تر متن */
-  .arial { font-family: Arial, sans-serif; font-size: 30px; }
-  .tahoma { font-family: Tahoma, sans-serif; font-size: 30px; }
-  .verdana { font-family: Verdana, sans-serif; font-size: 30px; }
-  .b-titr { font-family: 'B Titr', sans-serif; font-size: 30px; }
-  .georgia { font-family: Georgia, serif; font-size: 30px; }
-  .courier { font-family: 'Courier New', monospace; font-size: 30px; }
-  .times { font-family: 'Times New Roman', serif; font-size: 30px; }
-  .sans { font-family: sans-serif; font-size: 30px; }
-  .fake { font-family: 'MyFakeFont', sans-serif; font-size: 30px; }
+  .arial { font-family: Arial, sans-serif; }
+  .tahoma { font-family: Tahoma, sans-serif; }
+  .verdana { font-family: Verdana, sans-serif; }
+  .b-titr { font-family: 'B Titr', sans-serif; }
+  .sans { font-family: sans-serif; }
+  .georgia { font-family: Georgia, serif; }
+  .courier { font-family: 'Courier New', monospace; }
+  .times { font-family: 'Times New Roman', serif; }
+  .fake { font-family: 'MyFakeFont', sans-serif; }
+
+  .arial, .tahoma, .verdana, .b-titr, 
+  .georgia, .courier, .times, .sans, .fake {
+      font-size: 32px;
+  }
 
   /* جدول تحلیل به سبک لاگ */
   table#font-table {
@@ -110,7 +116,6 @@
     font-size: 0.9rem;
     color: #ccc;
   }
-
 </style>
 </head>
 <body>
@@ -130,9 +135,9 @@
     <tr><td class="verdana">سلام به جهان</td><td class="verdana">Verdana</td></tr>
     <tr><td class="b-titr">سلام به جهان</td><td class="b-titr">B Titr</td></tr>
     <tr><td class="georgia">سلام به جهان</td><td class="georgia">Georgia</td></tr>
+    <tr><td class="sans">سلام به جهان</td><td class="sans">sans-serif</td></tr>
     <tr><td class="courier">سلام به جهان</td><td class="courier">Courier New</td></tr>
     <tr><td class="times">سلام به جهان</td><td class="times">Times New Roman</td></tr>
-    <tr><td class="sans">سلام به جهان</td><td class="sans">sans-serif</td></tr>
     <tr><td class="fake">سلام به جهان</td><td class="fake">MyFakeFont</td></tr>
   </tbody>
 </table>
@@ -142,8 +147,9 @@
     <tr>
       <th>فونت</th>
       <th>وضعیت</th>
-      <th>طول متن</th>
-      <th>پیش‌فرض</th>
+      <th>عرض متن</th>
+      <th>ارتفاع متن</th>
+      <th>عرض پیش‌فرض</th>
       <th>تحلیل</th>
     </tr>
   </thead>
@@ -151,37 +157,45 @@
 </table>
 
 <script>
-function isFontAvailable(font) {
+function getTextSize(font) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   const text = "سلام به جهان";
 
+  // اندازه متن با فونت مورد نظر
+  ctx.font = `72px '${font}', monospace`;
+  const metrics = ctx.measureText(text);
+
+  const width = metrics.width;
+  const height = (metrics.actualBoundingBoxAscent || 0) + (metrics.actualBoundingBoxDescent || 0);
+
+  // عرض پیش‌فرض برای مقایسه نصب بودن
   ctx.font = '72px monospace';
   const defaultWidth = ctx.measureText(text).width;
 
-  ctx.font = `72px '${font}', monospace`;
-  const fontWidth = ctx.measureText(text).width;
+  const installed = width !== defaultWidth;
 
-  return { installed: fontWidth !== defaultWidth, width: fontWidth, defaultWidth: defaultWidth };
+  return { installed, width, height, defaultWidth };
 }
 
-const fonts = ['Arial', 'Tahoma', 'Verdana', 'B Titr', 'Georgia', 'Courier New', 'Times New Roman', 'sans-serif', 'MyFakeFont'];
+const fonts = ['Arial', 'Tahoma', 'Verdana', 'B Titr', 'Georgia', 'sans-serif', 'Courier New', 'Times New Roman', 'MyFakeFont'];
 const tbody = document.querySelector('#font-table tbody');
 
 fonts.forEach(f => {
-  const result = isFontAvailable(f);
+  const result = getTextSize(f);
   const tr = document.createElement('tr');
 
   tr.className = result.installed ? 'installed' : 'not-installed';
 
   const analysis = result.installed 
-    ? 'نصب شده' 
-    : 'نصب نیست';
+    ? 'نرمال' 
+    : 'فونت نصب نیست';
 
   tr.innerHTML = `
     <td>${f}</td>
     <td>${result.installed ? '✔️' : '⚠️'}</td>
     <td>${result.width.toFixed(2)}</td>
+    <td>${result.height.toFixed(2)}</td>
     <td>${result.defaultWidth.toFixed(2)}</td>
     <td class="analysis">${analysis}</td>
   `;
