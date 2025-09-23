@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Canvas Fingerprinting Demo with Visualization</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 30px; background: #f5f5f5; }
+  h2 { color: #333; }
+  #canvasContainer { margin-top: 20px; }
+  #output { background: #fff; padding: 10px; border-radius: 5px; box-shadow: 0 0 5px #ccc; }
+  .analysis { margin-top: 20px; background: #eef; padding: 10px; border-radius: 5px; direction: rtl;}
+</style>
+</head>
+<body>
+<h2>Canvas Fingerprinting Demo</h2>
+<p>Below is the canvas image generated, the hash (fingerprint), and a simple analysis.</p>
+
+<div id="canvasContainer">
+  <canvas id="fingerprintCanvas" width="300" height="80" style="border:1px solid #ccc;"></canvas>
+</div>
+
+<h3>Canvas Hash (Fingerprint):</h3>
+<pre id="output"></pre>
+
+<div class="analysis" id="analysis"></div>
+
+<script>
+function generateCanvasFingerprint() {
+  const canvas = document.getElementById('fingerprintCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // رسم پس‌زمینه و متن
+  ctx.fillStyle = "#f0f0f0";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.font = "18px Arial";
+  ctx.fillStyle = "red";
+  ctx.textBaseline = "top";
+  ctx.fillText("Hello, Canvas Fingerprint!", 10, 10);
+
+  // رسم شکل هندسی
+  ctx.strokeStyle = "blue";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(150, 50, 25, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // رسم خطوط مورب
+  ctx.strokeStyle = "green";
+  for (let i=0; i<canvas.width; i+=20) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(canvas.width - i, canvas.height);
+    ctx.stroke();
+  }
+
+  // خروجی تصویر
+  const dataURL = canvas.toDataURL();
+
+  // تولید hash ساده
+  let hash = 0;
+  for (let i = 0; i < dataURL.length; i++) {
+    const char = dataURL.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0; // 32 بیت
+  }
+
+  return { hash: hash.toString(), dataURL };
+}
+
+const result = generateCanvasFingerprint();
+document.getElementById("output").textContent = result.hash;
+
+// تحلیل ساده
+const analysisText = `
+🔹 Canvas Fingerprint Analysis:
+
+1️⃣ Text Rendering:
+   - فونت، اندازه و anti-aliasing روی hash تاثیر می‌ذاره.
+   - نصب بودن یا نبودن فونت Arial در سیستم شما باعث تفاوت میشه.
+
+2️⃣ Shapes:
+   - دایره و خطوط سبز به دلیل تفاوت‌های GPU و rendering engine کمی متفاوت دیده می‌شن.
+
+3️⃣ Colors:
+   - رنگ‌ها روی بعضی GPU ها و مرورگرها ممکنه دقیقاً یکسان نباشن.
+
+4️⃣ Canvas Size:
+   - ابعاد canvas (300x80) روی جزئیات و رندر تاثیر داره.
+
+🔹 نتیجه:
+   - حتی اگر مرورگر و سیستم عامل مشابه باشن، کارت گرافیک، درایور، فونت‌ها و تنظیمات anti-aliasing باعث می‌شن hash متفاوت بشه.
+   - این hash تقریبا منحصر به فرد هست و می‌تونه برای Fingerprinting استفاده بشه.
+`;
+
+document.getElementById("analysis").textContent = analysisText;
+</script>
+</body>
+</html>
